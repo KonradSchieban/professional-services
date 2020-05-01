@@ -2,7 +2,7 @@
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# You may obtain a copy of the License at 
 #
 #      http://www.apache.org/licenses/LICENSE-2.0
 #
@@ -12,24 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-variable "project_id" {
-  description = "Project ID"
+terraform {
+  required_version = "~> 0.12.20"
+  backend "gcs" {
+    bucket = "TF_ADMIN_BUCKET"
+    prefix = "terraform/state/reference-infrastructure"
+  }
 }
-
-variable "bucket_location" {
-  description = "Location of staging bucket for Cloud Function code"
-  default     = "US"
-}
-
-variable "region" {
-    description = "region to be used for VPC subnet"
-    default = "us-central1"
-}
-
-variable "zone" {
-    description = "zone to be used for VM"
-    default = "us-central1-a"
-}
-
-
-

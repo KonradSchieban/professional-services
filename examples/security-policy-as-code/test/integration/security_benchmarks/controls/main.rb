@@ -19,6 +19,18 @@ include_controls 'inspec-gcp-cis-benchmark' do
   skip_control 'cis-gcp-7.12-gke' # Overridden by local check
   skip_control 'cis-gcp-7.14-gke' # PSP check support in process https://github.com/inspec/inspec-gcp/issues/174
   skip_control 'cis-gcp-1.3-iam' # Need to allow user-managed key for Terraform
+  skip_control 'cis-gcp-2.8-logging' # skipping controls below this to keep the POC architecture simple
+  skip_control 'cis-gcp-2.6-logging'
+  skip_control 'cis-gcp-2.2-logging'
+  skip_control 'cis-gcp-2.9-logging'
+  skip_control 'cis-gcp-2.10-logging'
+  skip_control 'cis-gcp-2.11-logging'
+  skip_control 'cis-gcp-2.5-logging'
+  skip_control 'cis-gcp-2.4-logging'
+  skip_control 'cis-gcp-2.7-logging'
+  skip_control 'cis-gcp-1.8-iam'
+
+
 end
 
 # Include all from this benchmark except:
@@ -29,6 +41,14 @@ include_controls 'inspec-gcp-pci-3.2.1' do
   skip_control 'pci-dss-3.2.1-2.4' # CAI Inventory
   skip_control 'pci-dss-3.2.1-10.5.4' # GKE Logging to SD
   skip_control 'pci-dss-3.2.1-3.1' # PII Bucket not in use
+  skip_control 'pci-dss-3.2.1-10.6' # skipping controls below this to keep the POC architecture simple
+  skip_control 'pci-dss-3.2.1-6.4.1'
+  skip_control 'pci-dss-3.2.1-1.2.1'
+  skip_control 'pci-dss-3.2.1-1.3.4'
+  skip_control 'pci-dss-3.2.1-3.6.4'
+
+
+
 
   skip_control 'pci-dss-3.2.1-3.1' # PII Bucket not in use
 end

@@ -127,15 +127,16 @@ gsutil logging set on -b gs://$TF_ADMIN_BUCKET gs://$TF_ADMIN_BUCKET
 
 cat <<EOF > config.json
 {
-    "MAILGUN_API_KEY":"UPDATE",
-    "MAILGUN_DOMAIN":"UPDATE",
-    "MAILGUN_FROM":"UPDATE",
-    "MAILGUN_TO":"UPDATE",
-    "bucket_name":"<TF_ADMIN_BUCKET>"
+    "MAILGUN_API_KEY":"",
+    "MAILGUN_DOMAIN":"",
+    "MAILGUN_FROM":"inspec-security-alerts@example.com",
+    "MAILGUN_TO":"",
+    "bucket_name":"$TF_ADMIN_BUCKET"
 }
 EOF
 
 gsutil cp config.json gs://$TF_ADMIN_BUCKET/mailgun_json/config.json
+cp config.json modules/notifications/js/config.json
 rm -f config.json
 
 # Create Terraform Admin Account

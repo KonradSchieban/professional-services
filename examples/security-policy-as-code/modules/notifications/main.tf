@@ -72,4 +72,5 @@ resource "google_cloudfunctions_function" "subscribeMailgun" {
   source_archive_bucket = google_storage_bucket.cloud-function-code.name
   source_archive_object = google_storage_bucket_object.archive.output_name
   service_account_email = var.service_account_email
+  depends_on = [google_storage_bucket_object.archive]
 }

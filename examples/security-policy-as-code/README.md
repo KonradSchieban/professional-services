@@ -94,7 +94,7 @@ If you do not take any action here, eMail notifications will not be setup. The C
 
 1. Create a free Mailgun account using the Mailgun documentation here: https://documentation.mailgun.com/en/latest/quickstart.html
 2. Update the config.json placeholder values in `env_setup.sh` with the Mailgun API keys, Mailgun domain, Mailgun to/from, and the bucket where you will store Mailgun configuration data. This should be the same bucket you are using for Terraform admin.
-3. Navigate to `terraform/components/in-scope/main.tf` and "uncomment" out the call of the notifcations Terraform module at the bottom of the file (detailed comments are in this file with directions)
+3. Navigate to `terraform/main.tf` and `test/fixtures/in_scope_project/main.tf` and "uncomment" out the call of the notifcations Terraform module at the bottom of the file (detailed comments are in this file with directions)
 
 #### END OF OPTIONAL STEPS
 
@@ -127,28 +127,18 @@ source workstation.env
 
 
 # Reference Architecture
-Now we will build a GCP reference architecture using Terraform. This includes a VPC, Subnet, Firewall Rules, GCE Instances in a two-node Managed Instance Group behind a Load Balancer, and a GKE Cluster with a sample application deployed and exposed behind a separate Load Balancer.
+Now we will build a GCP reference architecture using Terraform. This includes a VPC network, a Compute Engine Virtual Machine, and a Cloud Function (if you followed optional steps above)
 
-1. Create the Shared VPC, Subnets, Alias Ranges, Firewall Rules, Cloud Router, Cloud NAT, and custom Firewall IAM Role:
+1. Create the Reference Architecture
 ```
-$ cd terraform/projects/network_vpc_setup
-$ cp backend.tf.example backend.tf
+$ cd terraform/
 $ terraform init -backend-config="bucket=$TF_ADMIN_BUCKET"
 $ terraform validate
 $ terraform plan
 $ terraform apply -auto-approve
-$ cd ../..
+$ cd ..
 ```
-2. Create the KMS keyring, Global IP, GKE Cluster and Node Pool, GCE Instance Group, Load Balancer, Firewall Rules, Custom Log metrics and log sinks, InSpec Report GCS Bucket, and InSpec Notification Cloud Function (if configuring eMail notifications).
-```
-$ cd components/in-scope
-$ cp backend.tf.example backend.tf
-$ terraform init -backend-config="bucket=$TF_ADMIN_BUCKET"
-$ terraform validate
-$ terraform plan
-$ terraform apply -auto-approve
-$ cd ../../..
-```
+
 # Attributes 
 
 1. To setup attributes for InSpec, copy `test/attributes/attrs.yml.example` to `test/attributes/$YOUR_MAIN_PROJECT-attrs.yml` and edit the variables as needed.  Typically, this is the gcp_project_id, gcp_gke_locations, gce_zones, and the *_list variables:

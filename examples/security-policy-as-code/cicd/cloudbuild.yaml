@@ -19,23 +19,14 @@ substitutions:
   _KMS_LOCATION: global
   _KEYRING: ''
   _KEY_NAME: ''
+  _STAGING_PROJECT_ID: ''
+  _MAIN_PROJECT_ID: ''
   _TERRAFORM_ADMIN_BUCKET: ''
-  _TERRAFORM_NETWORK_STATE: terraform/state/network_vpc
-  _TERRAFORM_INSCOPE_STATE: terraform/state/components/in-scope/infrastructure
   _REPORT_BUCKET: ''
-  _INTEGRATION_TEST_PROJECT: ''
-  _NETWORK_PROJECT_ID: ''
-  _INSCOPE_PROJECT_ID: ''
-  _ENABLE_HIPSTERSTORE: 'true'
-  _ENABLE_HELLOWORLD: 'false'
-  _INSCOPE_SA_EMAIL: ''
-  _PROJECT_PREFIX: 'pci-poc'
-  _IS_SHARED_VPC_HOST: 'true'
   _RUN_APPLY: 'true'
   _ALWAYS_REPORT: 'false'
   _PCI_PROFILE_REPO: 'inspec-gcp-pci-3.2.1'
   _SECURITY_BENECHMARKS_REPO: 'inspec-combination-profile'
-  _PCI_PROFILE_GCR_PROJECT: ''
 
 timeout: 2700s
 steps:
@@ -74,7 +65,7 @@ steps:
   timeout: 2400s
   entrypoint: '/bin/bash'
   env:
-  - TF_VAR_project_id=${_INTEGRATION_TEST_PROJECT}
+  - TF_VAR_project_id=${_STAGING_PROJECT_ID}
   - CFT_DISABLE_INIT_CREDENTIALS=yes
   - BUILD=${BUILD_ID}
   - REPORT_BUCKET=${_REPORT_BUCKET}
@@ -92,162 +83,84 @@ steps:
 
 
 - id: 'Initialize Terraform'
-  name: 'hashicorp/terraform:0.12.20'
+  name: 'hashicorp/terraform:0.12.24'
   waitFor: ['decrypt SA credentials']
   entrypoint: 'sh'
   env:
   - TF_CREDS=/workspace/credentials.json
   - GOOGLE_APPLICATION_CREDENTIALS=/workspace/credentials.json
-  - TF_VAR_network_project_id=${_NETWORK_PROJECT_ID}
-  - TF_VAR_in_scope_project_id=${_INSCOPE_PROJECT_ID}
-  - TF_VAR_enable_hipsterstore_app=${_ENABLE_HIPSTERSTORE}
-  - TF_VAR_enable_helloworld_app=${_ENABLE_HELLOWORLD}
-  - TF_VAR_override_inscope_sa_email=${_INSCOPE_SA_EMAIL}
-  - TF_VAR_project_prefix=${_PROJECT_PREFIX}
+  - TF_VAR_project_id=${_MAIN_PROJECT_ID}
   - TF_VAR_remote_state_bucket=${_TERRAFORM_ADMIN_BUCKET}
-  - TF_VAR_is_shared_vpc_host=${_IS_SHARED_VPC_HOST}
   args: 
   - '-c'
   - |
       cd terraform
-      cd projects/network_vpc_setup
-      cp backend.tf.example backend.tf
       terraform init -backend-config="bucket=${_TERRAFORM_ADMIN_BUCKET}"
-
-      cd /workspace/terraform/components/in-scope
-      cp backend.tf.example backend.tf
+      cd /workspace/terraform
       terraform init -backend-config="bucket=${_TERRAFORM_ADMIN_BUCKET}"
 
 - id: 'Terraform Validate'
-  name: 'hashicorp/terraform:0.12.20'
+  name: 'hashicorp/terraform:0.12.24'
   waitFor: ['Initialize Terraform']
   entrypoint: 'sh'
   env:
   - TF_CREDS=/workspace/credentials.json
   - GOOGLE_APPLICATION_CREDENTIALS=/workspace/credentials.json
-  - TF_VAR_network_project_id=${_NETWORK_PROJECT_ID}
-  - TF_VAR_in_scope_project_id=${_INSCOPE_PROJECT_ID}
-  - TF_VAR_enable_hipsterstore_app=${_ENABLE_HIPSTERSTORE}
-  - TF_VAR_enable_helloworld_app=${_ENABLE_HELLOWORLD}
-  - TF_VAR_override_inscope_sa_email=${_INSCOPE_SA_EMAIL}
-  - TF_VAR_project_prefix=${_PROJECT_PREFIX}
+  - TF_VAR_project_id=${_MAIN_PROJECT_ID}
   - TF_VAR_remote_state_bucket=${_TERRAFORM_ADMIN_BUCKET}
-  - TF_VAR_is_shared_vpc_host=${_IS_SHARED_VPC_HOST}
 
   args:
   - '-c'
   - |
-      cd terraform/projects/network_vpc_setup
+      cd terraform
       terraform validate
-      cd /workspace/terraform/components/in-scope
+      cd /workspace/terraform
       terraform validate
 
-- id: 'VPC Terraform Plan'
-  name: 'hashicorp/terraform:0.12.20'
+- id: 'Main Terraform Plan'
+  name: 'hashicorp/terraform:0.12.24'
   waitFor: ['Terraform Validate']
   entrypoint: 'sh'
   env:
   - TF_CREDS=/workspace/credentials.json
   - GOOGLE_APPLICATION_CREDENTIALS=/workspace/credentials.json
-  - TF_VAR_network_project_id=${_NETWORK_PROJECT_ID}
-  - TF_VAR_in_scope_project_id=${_INSCOPE_PROJECT_ID}
-  - TF_VAR_enable_hipsterstore_app=${_ENABLE_HIPSTERSTORE}
-  - TF_VAR_enable_helloworld_app=${_ENABLE_HELLOWORLD}
-  - TF_VAR_override_inscope_sa_email=${_INSCOPE_SA_EMAIL}
-  - TF_VAR_project_prefix=${_PROJECT_PREFIX}
+  - TF_VAR_project_id=${_MAIN_PROJECT_ID}
   - TF_VAR_remote_state_bucket=${_TERRAFORM_ADMIN_BUCKET}
-  - TF_VAR_is_shared_vpc_host=${_IS_SHARED_VPC_HOST}
 
   args: 
   - '-c'
   - | 
-      cd terraform/projects/network_vpc_setup
+      cd terraform
       terraform plan
 
-- id: 'VPC Terraform Apply'
-  name: 'hashicorp/terraform:0.12.20'
-  waitFor: ['VPC Terraform Plan', 'Test Infrastructure Changes for Policy Violations']
+- id: 'Main Terraform Apply'
+  name: 'hashicorp/terraform:0.12.24'
+  waitFor: ['Main Terraform Plan', 'Test Infrastructure Changes for Policy Violations']
   entrypoint: 'sh'
   env:
   - TF_CREDS=/workspace/credentials.json
   - GOOGLE_APPLICATION_CREDENTIALS=/workspace/credentials.json
-  - TF_VAR_network_project_id=${_NETWORK_PROJECT_ID}
-  - TF_VAR_in_scope_project_id=${_INSCOPE_PROJECT_ID}
-  - TF_VAR_enable_hipsterstore_app=${_ENABLE_HIPSTERSTORE}
-  - TF_VAR_enable_helloworld_app=${_ENABLE_HELLOWORLD}
-  - TF_VAR_override_inscope_sa_email=${_INSCOPE_SA_EMAIL}
-  - TF_VAR_project_prefix=${_PROJECT_PREFIX}
+  - TF_VAR_project_id=${_MAIN_PROJECT_ID}
   - TF_VAR_remote_state_bucket=${_TERRAFORM_ADMIN_BUCKET}
-  - TF_VAR_is_shared_vpc_host=${_IS_SHARED_VPC_HOST}
   - RUN_APPLY=${_RUN_APPLY}
 
   args:
   - '-c'
   - |
       if [[ "$${RUN_APPLY}" == "true" ]]; then
-        cd terraform/projects/network_vpc_setup
+        cd terraform
         terraform apply -auto-approve
       else
         echo "Skipping Terraform Apply step because the CloudBuild substitution '_RUN_APPLY' is '$${RUN_APPLY}'"
       fi
 
-- id: 'Component Terraform Plan'
-  name: 'hashicorp/terraform:0.12.20'
-  waitFor: ['VPC Terraform Apply']
-  entrypoint: 'sh'
-  env:
-  - TF_CREDS=/workspace/credentials.json
-  - GOOGLE_APPLICATION_CREDENTIALS=/workspace/credentials.json
-  - TF_VAR_network_project_id=${_NETWORK_PROJECT_ID}
-  - TF_VAR_in_scope_project_id=${_INSCOPE_PROJECT_ID}
-  - TF_VAR_enable_hipsterstore_app=${_ENABLE_HIPSTERSTORE}
-  - TF_VAR_enable_helloworld_app=${_ENABLE_HELLOWORLD}
-  - TF_VAR_override_inscope_sa_email=${_INSCOPE_SA_EMAIL}
-  - TF_VAR_project_prefix=${_PROJECT_PREFIX}
-  - TF_VAR_remote_state_bucket=${_TERRAFORM_ADMIN_BUCKET}
-  - TF_VAR_is_shared_vpc_host=${_IS_SHARED_VPC_HOST}
-
-  args:
-  - '-c'
-  - |
-      cd /workspace/terraform/components/in-scope
-      terraform plan
-
-- id: 'Component Terraform Apply'
-  name: 'hashicorp/terraform:0.12.20'
-  waitFor: ['Component Terraform Plan']
-  entrypoint: 'sh'
-  env:
-  - TF_CREDS=/workspace/credentials.json
-  - GOOGLE_APPLICATION_CREDENTIALS=/workspace/credentials.json
-  - TF_VAR_network_project_id=${_NETWORK_PROJECT_ID}
-  - TF_VAR_in_scope_project_id=${_INSCOPE_PROJECT_ID}
-  - TF_VAR_enable_hipsterstore_app=${_ENABLE_HIPSTERSTORE}
-  - TF_VAR_enable_helloworld_app=${_ENABLE_HELLOWORLD}
-  - TF_VAR_override_inscope_sa_email=${_INSCOPE_SA_EMAIL}
-  - TF_VAR_project_prefix=${_PROJECT_PREFIX}
-  - TF_VAR_remote_state_bucket=${_TERRAFORM_ADMIN_BUCKET}
-  - TF_VAR_is_shared_vpc_host=${_IS_SHARED_VPC_HOST}
-  - RUN_APPLY=${_RUN_APPLY}
-
-  args:
-  - '-c'
-  - |
-      if [[ "$${RUN_APPLY}" == "true" ]]; then
-        cd /workspace/terraform/components/in-scope
-        terraform apply -auto-approve
-      else
-        echo "Skipping Terraform Apply step because the CloudBuild substitution '_RUN_APPLY' is '$${RUN_APPLY}'"
-      fi
-
-# [END tf-apply]
 - id: 'Scan Production Environment'
   name: 'gcr.io/cloud-foundation-cicd/cft/developer-tools:0'
-  waitFor: ['Component Terraform Apply']
+  waitFor: ['Main Terraform Apply']
   timeout: 2400s
   entrypoint: '/bin/bash'
   env:
-  - TF_VAR_project_id=${_INSCOPE_PROJECT_ID}
+  - TF_VAR_project_id=${_MAIN_PROJECT_ID}
   - CFT_DISABLE_INIT_CREDENTIALS=yes
   - BUILD=${BUILD_ID}
   - REPORT_BUCKET=${_REPORT_BUCKET}
